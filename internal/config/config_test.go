@@ -30,7 +30,7 @@ func TestEnsureGitignorePreservesContentAndIsIdempotent(t *testing.T) {
 			t.Fatalf("missing %q in %s", expected, text)
 		}
 	}
-	if strings.Count(text, ".env\n") != 1 {
+	if strings.Count("\n"+text, "\n.env\n") != 1 {
 		t.Fatalf("duplicated existing entry: %s", text)
 	}
 	updated, err = EnsureGitignore(root)

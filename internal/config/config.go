@@ -18,6 +18,7 @@ var gitignoreEntries = []string{
 	".agents/",
 	".env",
 	".env.*",
+	"*.env",
 	".onthego.local/",
 	"*.otg",
 	"HANDOFF.md",

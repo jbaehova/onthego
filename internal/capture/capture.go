@@ -537,7 +537,7 @@ func alwaysDenied(path string) bool {
 
 func isSecretCandidate(path string) bool {
 	base := strings.ToLower(filepath.Base(path))
-	return base == ".env" || strings.HasPrefix(base, ".env.") || strings.HasSuffix(base, ".pem") || strings.Contains(base, "secret") || strings.Contains(base, "token")
+	return base == ".env" || strings.HasPrefix(base, ".env.") || strings.HasSuffix(base, ".env") || strings.HasSuffix(base, ".pem") || strings.Contains(base, "secret") || strings.Contains(base, "token")
 }
 
 func SigningPublic(keys identity.Keys) string {

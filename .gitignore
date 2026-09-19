@@ -2,6 +2,7 @@ AGENTS.md
 .agents/
 .env
 .env.*
+*.env
 .onthego.local/
 *.otg
 HANDOFF.md

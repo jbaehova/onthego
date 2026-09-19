@@ -193,6 +193,11 @@ func (c Client) httpClient() (*http.Client, error) {
 				if subtle.ConstantTimeCompare(actual[:], expected) != 1 {
 					return errors.New("control plane certificate fingerprint mismatch")
 				}
+				now := time.Now()
+				certificate := state.PeerCertificates[0]
+				if now.Before(certificate.NotBefore) || now.After(certificate.NotAfter) {
+					return errors.New("control plane certificate is expired or not yet valid")
+				}
 				return nil
 			},
 		}

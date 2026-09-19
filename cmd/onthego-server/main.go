@@ -17,7 +17,7 @@ func main() {
 	if bootstrap == "" || len(signing) < 32 {
 		log.Fatal("ONTHEGO login bootstrap token and signing key are required")
 	}
-	listen := value("ONTHEGO_CONTROL_PLANE_LISTEN", ":8443")
+	listen := value("ONTHEGO_CONTROL_PLANE_LISTEN", ":443")
 	dataDir := value("ONTHEGO_CONTROL_PLANE_DATA", "/var/lib/onthego")
 	certificate := value("ONTHEGO_CONTROL_PLANE_TLS_CERT", "/var/lib/onthego/tls.crt")
 	privateKey := value("ONTHEGO_CONTROL_PLANE_TLS_KEY", "/var/lib/onthego/tls.key")

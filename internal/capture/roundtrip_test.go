@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jbaehova/onthego/internal/capture"
@@ -14,6 +15,27 @@ import (
 	"github.com/jbaehova/onthego/internal/identity"
 	"github.com/jbaehova/onthego/internal/restore"
 )
+
+func TestNamedEnvIsExcludedFromCapture(t *testing.T) {
+	root := t.TempDir()
+	git(t, root, "init")
+	git(t, root, "-c", "user.name=ONTHEGO Test", "-c", "user.email=test@example.invalid", "commit", "--allow-empty", "-m", "fixture")
+	mustWrite(t, filepath.Join(root, "vps.env"), []byte("PASSWORD=test-only\n"), 0o600)
+	mustWrite(t, filepath.Join(root, "notes.txt"), []byte("safe\n"), 0o644)
+	cfg := config.Default()
+	cfg.Include = nil
+	files, err := capture.Preview(context.Background(), capture.Options{Root: root, Config: cfg})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 || files[0].RelativePath != "notes.txt" {
+		t.Fatalf("unexpected captured files: %#v", files)
+	}
+	_, err = capture.Preview(context.Background(), capture.Options{Root: root, Config: cfg, Include: []string{"vps.env"}})
+	if err == nil || !strings.Contains(err.Error(), "secret candidate") {
+		t.Fatalf("expected explicit include to require secret opt-in, got %v", err)
+	}
+}
 
 func TestCaptureRestoreRoundTrip(t *testing.T) {
 	ctx := context.Background()

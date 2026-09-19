@@ -50,7 +50,7 @@ Create a private `.env` at the Git root:
 
 ```dotenv
 DAYTONA_API_KEY=...
-ONTHEGO_CONTROL_PLANE_URL=https://your-control-plane.example.com:8443
+ONTHEGO_CONTROL_PLANE_URL=https://your-control-plane.example.com
 ONTHEGO_CONTROL_PLANE_TLS_SHA256=...
 ONTHEGO_LOGIN_BOOTSTRAP_TOKEN=...
 
@@ -73,7 +73,7 @@ onthego pull
 That is the complete Phase 1 workflow. You do not choose an agent or paste a session ID. `onthego pass` resolves the current Git root and collects the matching sessions automatically.
 
 > [!NOTE]
-> The current release expects a Daytona account and a deployed ONTHEGO control plane. The control plane server is included in this repository. See [Architecture](docs/architecture.md) and the [systemd unit](deploy/contabo/onthego.service).
+> The current release expects a Daytona account and a deployed ONTHEGO control plane. The control plane server is included in this repository. See [Architecture](docs/architecture.md) and the [Contabo operations guide](docs/contabo.md).
 
 ## The Five Commands
 

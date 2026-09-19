@@ -2,6 +2,8 @@
 
 Updated 2026-09-19.
 
+The replacement VPS follow-up is recorded separately in [VPS feedback validation](testing/2026-09-19-vps-feedback.md). Earlier live demo checks below describe the original environment; they should not be used as evidence for a different deployment. See the follow-up record for current-server verification and the [operations guide](contabo.md) for updates and certificate rotation.
+
 ## Complete
 
 - The public CLI exposes `init`, `login`, `pass`, `pull`, and `status`.
