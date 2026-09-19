@@ -1,6 +1,6 @@
 {
   "name": "@jbaehova/onthego",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Carry agent context and work between local projects and Daytona sandboxes",
   "license": "MIT",
   "repository": {

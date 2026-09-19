@@ -67,4 +67,4 @@ The expiry timer records a failed unit and journal entry; it does not deliver an
 
 The existing-installation updater requires Python 3, OpenSSL, OpenSSH, `sshpass`, and a verified SSH host key. It does not provision a blank VPS. It preserves runtime credentials and project data.
 
-These changes are verified from source. The published npm version remains `0.1.2`; a new npm release is not part of this follow-up.
+These changes were initially verified from source while npm remained at `0.1.2`. They are included in the `0.1.3` release.

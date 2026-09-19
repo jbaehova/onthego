@@ -45,7 +45,7 @@ Automatic certificate replacement is intentionally not enabled: the CLI pins the
 4. Update `ONTHEGO_CONTROL_PLANE_TLS_SHA256` in each client's root `.env`. Run the external check, then `onthego login` and `onthego status`.
 5. If validation fails, restore both the previous TLS files and client pin. Keep the current pin until the planned rotation; the renewal procedure does not run during ordinary deployment.
 
-Clients using the updated source reject expired and not-yet-valid pinned certificates as well as incorrect pins. The published `0.1.2` CLI checks the fingerprint but does not enforce certificate dates.
+Starting with `0.1.3`, clients reject expired and not-yet-valid pinned certificates as well as incorrect pins. The `0.1.2` CLI checks the fingerprint but does not enforce certificate dates.
 
 ## Acceptance scope
 

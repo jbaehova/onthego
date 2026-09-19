@@ -1,5 +1,5 @@
 BINARY := dist/onthego
-VERSION ?= 0.1.2-dev
+VERSION ?= 0.1.3-dev
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || printf unknown)
 BUILT_AT ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.builtAt=$(BUILT_AT)
