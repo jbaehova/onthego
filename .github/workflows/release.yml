@@ -1,0 +1,90 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.25.4"
+      - run: go test ./...
+      - run: go vet ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.25.4"
+      - name: Build CLI
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          mkdir -p dist
+          VERSION="${GITHUB_REF_NAME:-0.1.0-dev}"
+          go build -trimpath -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${GITHUB_SHA} -X main.builtAt=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o "dist/onthego-${GOOS}-${GOARCH}" ./cmd/onthego
+          cd dist
+          sha256sum "onthego-${GOOS}-${GOARCH}" > "onthego-${GOOS}-${GOARCH}.sha256"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: onthego-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+      - name: Assemble npm package
+        run: |
+          mkdir -p npm/vendor
+          cp artifacts/onthego-linux-amd64/onthego-linux-amd64 npm/vendor/
+          cp artifacts/onthego-darwin-arm64/onthego-darwin-arm64 npm/vendor/
+          chmod 0755 npm/bin/onthego.js npm/vendor/*
+          node -e "const fs=require('fs'); const p=require('./package.json'); p.version=process.env.GITHUB_REF_NAME.replace(/^v/, ''); fs.writeFileSync('package.json', JSON.stringify(p, null, 2)+'\\n')"
+      - name: Reject secret and local files
+        run: |
+          test ! -e .env.example
+          test ! -e Dockerfile
+          test ! -e .dockerignore
+          test -z "$(find . -path ./.git -prune -o \( -name '.env' -o -name 'AGENTS.md' -o -path '*/.agents/*' -o -name '*.otg' \) -print)"
+      - run: npm pack --dry-run
+      - run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            artifacts/*/onthego-*

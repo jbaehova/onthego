@@ -1,0 +1,36 @@
+{
+  "name": "@jbaehova/onthego",
+  "version": "0.1.2",
+  "description": "Carry agent context and work between local projects and Daytona sandboxes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jbaehova/onthego.git"
+  },
+  "homepage": "https://github.com/jbaehova/onthego#readme",
+  "bugs": {
+    "url": "https://github.com/jbaehova/onthego/issues"
+  },
+  "bin": {
+    "onthego": "npm/bin/onthego.js"
+  },
+  "files": [
+    "npm/bin/onthego.js",
+    "npm/vendor/onthego-darwin-arm64",
+    "npm/vendor/onthego-linux-amd64",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "demo": "./scripts/demo.sh",
+    "prepack": "node npm/scripts/verify-package.mjs",
+    "test": "go test ./..."
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
