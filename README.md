@@ -12,6 +12,7 @@
   <img alt="npm version" src="https://img.shields.io/npm/v/%40jbaehova%2Fonthego?style=flat-square&logo=npm&logoColor=white&color=CB3837">
   <img alt="Node 18+" src="https://img.shields.io/badge/Node-18%2B-43853D?style=flat-square&logo=node.js&logoColor=white">
   <img alt="Go 1.25.4+" src="https://img.shields.io/badge/Go-1.25.4%2B-00ADD8?style=flat-square&logo=go&logoColor=white">
+  <a href="docs/daytona-integration.md"><img alt="Daytona official Go SDK" src="https://img.shields.io/badge/Daytona-Official_Go_SDK-111827?style=flat-square"></a>
   <img alt="macOS arm64 and Linux x64" src="https://img.shields.io/badge/Platform-macOS_arm64_%7C_Linux_x64-334155?style=flat-square">
   <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/License-MIT-C5A800?style=flat-square"></a>
 </p>
@@ -124,6 +125,27 @@ The official Daytona Go SDK creates or selects a sandbox, uploads the redacted c
 ### 4. Resume with proof
 
 `onthego status` combines local Git state with remote run state. `onthego pull` refuses results with a missing or mismatched SHA-256 receipt, so an unverified artifact never becomes the local handoff.
+
+## Built on Daytona
+
+Daytona provides the remote execution environment behind `onthego pass`, `status`, and `pull`. ONTHEGO uses the official **Daytona Go SDK** directly for sandbox access, process sessions, and streamed file transfer.
+
+| Daytona capability | ONTHEGO integration |
+| --- | --- |
+| Sandbox API | Create an ephemeral sandbox or reuse a configured Daytona sandbox. |
+| FileSystem API | Upload redacted agent context and the bundled Linux receiver. |
+| Process sessions | Launch the receiver asynchronously and retain its Daytona command ID. |
+| Process status and logs | Observe completion and retrieve stdout and stderr for status summaries. |
+| Artifact download | Stream the result from Daytona, then verify its receipt in ONTHEGO. |
+| Session cleanup | Restrict cleanup to process sessions with the ONTHEGO prefix. |
+
+The adapter lives in [`internal/transport/daytona`](internal/transport/daytona). Its SDK contract tests exercise the real SDK against a local API fixture, including Daytona's multipart file download protocol.
+
+- [Daytona integration and SDK call map](docs/daytona-integration.md)
+- [Daytona developer guide and test coverage](docs/daytona-development.md)
+- [Live Daytona validation evidence](docs/testing/2026-09-19-vps-feedback.md)
+
+The supported demo uses Daytona CPU execution. GPU fine-tuning, GPU serving, and Hugging Face integration remain unfinished backlog work.
 
 ## Security Model
 

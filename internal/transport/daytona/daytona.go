@@ -20,12 +20,18 @@ import (
 	"github.com/jbaehova/onthego/internal/workload"
 )
 
+// DefaultReceiverPath is the configured receiver location for a Daytona target.
+// PassWorkload uploads the bundled receiver under the individual transfer root.
 const DefaultReceiverPath = "/usr/local/bin/onthego"
 
+// Client adapts the official Daytona Go SDK to ONTHEGO workload receipts.
+// SDK owns the authenticated Daytona API and sandbox Toolbox clients.
 type Client struct {
 	SDK *daytonasdk.Client
 }
 
+// New initializes the official Daytona SDK without duplicating its auth flow.
+// Repository .env loading happens in the CLI before this boundary is reached.
 func New() (*Client, error) {
 	sdk, err := daytonasdk.NewClient()
 	if err != nil {
@@ -34,6 +40,8 @@ func New() (*Client, error) {
 	return &Client{SDK: sdk}, nil
 }
 
+// Probe checks Daytona access without creating a sandbox or starting a process.
+// An empty sandboxID checks the account's sandbox listing instead.
 func (c *Client) Probe(ctx context.Context, sandboxID string) error {
 	if sandboxID == "" {
 		iterator := c.SDK.List(ctx, nil)
@@ -50,6 +58,10 @@ func (c *Client) Probe(ctx context.Context, sandboxID string) error {
 	return nil
 }
 
+// PassWorkload performs the Daytona handoff: resolve a sandbox, upload the
+// request and redacted context, upload the receiver, then launch its process.
+// The returned Daytona command ID identifies an asynchronous run, not a
+// completed result. Observe establishes completion and retrieves its receipt.
 func (c *Client) PassWorkload(ctx context.Context, target config.Target, request workload.Request, contextDir string) (workload.Receipt, error) {
 	if err := request.Definition.Validate(); err != nil {
 		return workload.Receipt{}, &otgerror.Error{Code: otgerror.CodeInput, Message: err.Error()}
@@ -133,6 +145,8 @@ func (c *Client) PassWorkload(ctx context.Context, target config.Target, request
 	}, nil
 }
 
+// receiverBinary selects the Linux amd64 executable used inside Daytona.
+// The npm package bundles it alongside the local platform's CLI executable.
 func receiverBinary() (string, error) {
 	if configured := os.Getenv("ONTHEGO_RECEIVER_BINARY"); configured != "" {
 		if !isLinuxAMD64(configured) {
@@ -169,6 +183,8 @@ func isLinuxAMD64(path string) bool {
 	return bytes.Equal(header[:4], []byte{0x7f, 'E', 'L', 'F'}) && header[18] == 0x3e && header[19] == 0x00
 }
 
+// uploadExecutable uses Daytona FileSystem streaming and permission APIs.
+// It avoids requiring a compiler or package installer in the Daytona sandbox.
 func uploadExecutable(ctx context.Context, sandbox *daytonasdk.Sandbox, localPath, remotePath string) error {
 	info, err := os.Stat(localPath)
 	if err != nil {
@@ -195,6 +211,9 @@ func uploadExecutable(ctx context.Context, sandbox *daytonasdk.Sandbox, localPat
 	return sandbox.FileSystem.SetFilePermissions(ctx, remotePath, daytonaoptions.WithPermissionMode("0755"))
 }
 
+// Observe combines Daytona Process status with the ONTHEGO receiver receipt.
+// The SDK's process exit code and the receiver's transfer identity are separate
+// checks: a completed Daytona command must still match the original handoff.
 func (c *Client) Observe(ctx context.Context, receipt workload.Receipt) (workload.Receipt, map[string]any, error) {
 	sandbox, err := c.SDK.Get(ctx, receipt.SandboxID)
 	if err != nil {
@@ -230,6 +249,8 @@ func (c *Client) Observe(ctx context.Context, receipt workload.Receipt) (workloa
 	return receipt, status, nil
 }
 
+// readRemoteReceipt streams bounded metadata from the Daytona transfer folder.
+// The receiver writes this document after executing the configured workload.
 func readRemoteReceipt(ctx context.Context, sandbox *daytonasdk.Sandbox, receipt workload.Receipt) (workload.Receipt, error) {
 	path := fmt.Sprintf("/workspace/onthego/%s/%s/metadata/workload-receipt.json", receipt.ProjectID, receipt.TransferID)
 	stream, err := sandbox.FileSystem.DownloadFileStream(ctx, path)
@@ -246,6 +267,8 @@ func readRemoteReceipt(ctx context.Context, sandbox *daytonasdk.Sandbox, receipt
 	return remote, nil
 }
 
+// Logs retrieves stdout and stderr for the recorded Daytona session command.
+// Callers must redact this output before displaying or synchronizing it.
 func (c *Client) Logs(ctx context.Context, receipt workload.Receipt) ([]byte, error) {
 	sandbox, err := c.SDK.Get(ctx, receipt.SandboxID)
 	if err != nil {
@@ -258,6 +281,8 @@ func (c *Client) Logs(ctx context.Context, receipt workload.Receipt) ([]byte, er
 	return json.MarshalIndent(logs, "", "  ")
 }
 
+// Stop deletes an ONTHEGO-owned Daytona process session. It does not delete
+// the Daytona sandbox or unrelated sessions sharing that sandbox.
 func (c *Client) Stop(ctx context.Context, receipt workload.Receipt) error {
 	if !strings.HasPrefix(receipt.SessionID, "onthego-") {
 		return &otgerror.Error{Code: otgerror.CodeInput, Message: "refusing to stop a session not created by ONTHEGO"}
@@ -272,6 +297,9 @@ func (c *Client) Stop(ctx context.Context, receipt workload.Receipt) error {
 	return nil
 }
 
+// Download retrieves a file from the project's managed Daytona directory.
+// Local files are created exclusively with private permissions. Hash checking
+// belongs to the workload pull layer, which has the expected artifact digest.
 func (c *Client) Download(ctx context.Context, receipt workload.Receipt, remotePath, localPath string) error {
 	if !strings.HasPrefix(filepath.Clean(remotePath), "/workspace/onthego/"+receipt.ProjectID+"/") {
 		return errors.New("remote artifact path is outside the managed workload root")
@@ -303,6 +331,9 @@ func (c *Client) Download(ctx context.Context, receipt workload.Receipt, remoteP
 	return f.Close()
 }
 
+// ensureSandbox reuses a configured Daytona sandbox or creates an ephemeral
+// sandbox with ONTHEGO project labels. Secret mappings are delegated to
+// Daytona's sandbox configuration; local .env contents are not uploaded here.
 func (c *Client) ensureSandbox(ctx context.Context, target config.Target, request workload.Request) (*daytonasdk.Sandbox, error) {
 	if target.SandboxID != "" {
 		sandbox, err := c.SDK.Get(ctx, target.SandboxID)
@@ -339,6 +370,8 @@ func (c *Client) ensureSandbox(ctx context.Context, target config.Target, reques
 	return sandbox, nil
 }
 
+// uploadDirectory transfers the prepared context through Daytona FileSystem.
+// Only regular files and directories are accepted; symlinks are not followed.
 func uploadDirectory(ctx context.Context, sandbox *daytonasdk.Sandbox, localRoot, remoteRoot string) error {
 	return filepath.WalkDir(localRoot, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {

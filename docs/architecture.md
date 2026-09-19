@@ -33,6 +33,8 @@ The Daytona adapter uses the official Go SDK. It creates or selects a sandbox, u
 
 The default `agent-sync` workload runs without a GPU. Logs are redacted before they are included in local status or synchronized state. Result download rejects paths outside the managed workload root and rejects a file whose SHA-256 hash differs from the remote receipt.
 
+The [Daytona integration map](daytona-integration.md) documents the exact SDK calls, sandbox configuration, process identifiers, and transfer layout. The [Daytona developer guide](daytona-development.md) connects these boundaries to offline SDK contract tests and the existing live validation evidence.
+
 ## Control plane boundary
 
 The Contabo service exposes TLS endpoints for login, token refresh, health, and project state. The CLI pins the TLS certificate fingerprint stored in the root `.env`. Access tokens expire after 12 hours and refresh tokens expire after 30 days. Project writes use a generation precondition to reject stale updates.
